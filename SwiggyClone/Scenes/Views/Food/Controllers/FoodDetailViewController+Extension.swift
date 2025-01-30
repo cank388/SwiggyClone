@@ -9,28 +9,38 @@ import UIKit
 
 extension FoodDetailViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
-    
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 2
+        return FoodDetailSection.allCases.count
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if section == 0 {
+        guard let section = FoodDetailSection(rawValue: section) else { return 0 }
+        
+        switch section {
+        case .banner:
             return 1
+        case .restaurants:
+            return restaurantListMockData.count
         }
-        return restaurantListMockData.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if indexPath.section == 0 {
+        guard let section = FoodDetailSection(rawValue: indexPath.section) else {
+            return UICollectionViewCell()
+        }
+        
+        switch section {
+        case .banner:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Key.ReusableIdentifiers.foodTopBannerId, for: indexPath) as! FoodTopBannerCVCell
             cell.bannerImage.image = UIImage(named: "ic_d_banner")
             cell.bannerImage.layer.cornerRadius = 0
             return cell
+            
+        case .restaurants:
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Key.ReusableIdentifiers.restaurantListId, for: indexPath) as! RestaurantsListCVCell
+            cell.data = restaurantListMockData[indexPath.row]
+            return cell
         }
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Key.ReusableIdentifiers.restaurantListId, for: indexPath) as! RestaurantsListCVCell
-        cell.data = restaurantListMockData[indexPath.row]
-        return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
@@ -54,14 +64,19 @@ extension FoodDetailViewController: FoodFilterHeaderActionDelegate, FoodDetailNa
     }
     
     func configureCompositionalLayout() {
-        
         let layout = UICollectionViewCompositionalLayout { (sectionNumber, env) in
-            if sectionNumber == 0 {
-                return LayoutType.foodDetailBannerLayout.getLayout()
+            guard let section = FoodDetailSection(rawValue: sectionNumber) else {
+                return nil
             }
-            return LayoutType.foodListLayout.getLayout(withHeader: true)
+            
+            switch section {
+            case .banner:
+                return LayoutType.foodDetailBannerLayout.getLayout()
+            case .restaurants:
+                return LayoutType.foodListLayout.getLayout(withHeader: true)
+            }
         }
-        collectionView.setCollectionViewLayout(layout, animated: true )
+        collectionView.setCollectionViewLayout(layout, animated: true)
     }
     
 }

@@ -10,69 +10,96 @@ import UIKit
 extension FoodViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 6
+        return FoodSection.allCases.count
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if section == 0 {
+        guard let section = FoodSection(rawValue: section) else { return 0 }
+        
+        switch section {
+        case .topBanner:
             return foodTopBannerMockData.count
-        } else if section == 1 {
+        case .categories:
             return foodCategoryMockData.count
-        } else if section == 3 {
+        case .restaurantList:
+            return restaurantListMockData.count
+        case .suggestions:
             return curatedRestaurantsMockData.count
-         } else if section == 5 {
-             return veganRestaurantMockData.count
-         }
-        return restaurantListMockData.count
+        case .popularRestaurants:
+            return restaurantListMockData.count
+        case .veganRestaurants:
+            return veganRestaurantMockData.count
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if indexPath.section == 0 {
+        guard let section = FoodSection(rawValue: indexPath.section) else {
+            return UICollectionViewCell()
+        }
+        
+        switch section {
+        case .topBanner:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Key.ReusableIdentifiers.foodTopBannerId, for: indexPath) as! FoodTopBannerCVCell
             cell.data = foodTopBannerMockData[indexPath.row]
             return cell
-        } else if indexPath.section == 1 {
+            
+        case .categories:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Key.ReusableIdentifiers.foodCategoryId, for: indexPath) as! FoodCategoryCVCell
             cell.data = foodCategoryMockData[indexPath.row]
             return cell
-        } else if indexPath.section == 3 {
+            
+        case .suggestions:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Key.ReusableIdentifiers.foodSuggestionCardId, for: indexPath) as! FoodSuggestionCardCVCell
             cell.data = curatedRestaurantsMockData[indexPath.row]
             return cell
-        } else if indexPath.section == 5 {
+            
+        case .veganRestaurants:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Key.ReusableIdentifiers.restaurantVeganId, for: indexPath) as! RestaurantVeganCVCell
             cell.data = veganRestaurantMockData[indexPath.row]
             return cell
+            
+        case .restaurantList, .popularRestaurants:
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Key.ReusableIdentifiers.restaurantListId, for: indexPath) as! RestaurantsListCVCell
+            cell.data = restaurantListMockData[indexPath.row]
+            return cell
         }
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Key.ReusableIdentifiers.restaurantListId, for: indexPath) as! RestaurantsListCVCell
-        cell.data = restaurantListMockData[indexPath.row]
-        return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+        guard let section = FoodSection(rawValue: indexPath.section) else {
+            return UICollectionReusableView()
+        }
+        
         if kind == headerKind {
-            if indexPath.section == 2 {
+            switch section {
+            case .restaurantList:
                 let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: Key.ReusableIdentifiers.foodVCHeaderViewId, for: indexPath) as! FoodFilterHeaderView
                 header.delegate = self
                 return header
-            }
-            if indexPath.section == 5 {
+                
+            case .veganRestaurants:
                 let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: Key.ReusableIdentifiers.sectionHeaderView2Id, for: indexPath) as! SectionHeaderView_2
                 return header
+                
+            default:
+                let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: Key.ReusableIdentifiers.sectionHeaderViewId, for: indexPath) as! SectionHeaderView
+                return header
             }
-            let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: Key.ReusableIdentifiers.sectionHeaderViewId, for: indexPath) as! SectionHeaderView
-            return header
         } else {
             let footer = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: Key.ReusableIdentifiers.sectionFooterViewId, for: indexPath) as! SectionFooterView
             return footer
         }
-        
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if indexPath.section == 0 {
+        guard let section = FoodSection(rawValue: indexPath.section) else { return }
+        
+        switch section {
+        case .topBanner:
             let VC = FoodDetailViewController()
             navigationController?.pushViewController(VC, animated: true)
+        default:
+            break
         }
     }
     
@@ -108,25 +135,29 @@ extension FoodViewController: UICollectionViewDelegate, UICollectionViewDataSour
 extension FoodViewController {
     
     func configureCompositionalLayout() {
-        
         let layout = UICollectionViewCompositionalLayout { (sectionNumber, env) in
-            if sectionNumber == 0 {
+            guard let section = FoodSection(rawValue: sectionNumber) else {
+                return nil
+            }
+            
+            switch section {
+            case .topBanner:
                 return LayoutType.headerLayout.getLayout()
-            } else if sectionNumber == 1 {
+            case .categories:
                 return LayoutType.foodCategoryLayout.getLayout()
-            } else if sectionNumber == 2 {
+            case .restaurantList:
                 return LayoutType.foodListLayout.getLayout()
-            } else if sectionNumber == 3 {
+            case .suggestions:
                 return LayoutType.suggestionSectionLayout.getLayout()
-            } else if sectionNumber == 5 {
+            case .veganRestaurants:
                 return LayoutType.veganSectionLayout.getLayout()
-            } else {
+            case .popularRestaurants:
                 return LayoutType.foodListLayout.getLayout(withHeader: false)
             }
         }
         
         layout.register(SectionDecorationView.self, forDecorationViewOfKind: sectionBackground)
-        collectionView.setCollectionViewLayout(layout, animated: true )
+        collectionView.setCollectionViewLayout(layout, animated: true)
     }
     
 }

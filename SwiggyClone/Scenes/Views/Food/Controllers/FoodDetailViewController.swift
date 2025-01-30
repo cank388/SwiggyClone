@@ -7,6 +7,11 @@
 
 import UIKit
 
+enum FoodDetailSection: Int, CaseIterable {
+    case banner
+    case restaurants
+}
+
 class FoodDetailViewController: UIViewController {
 
     // MARK: PROPERTIES -
